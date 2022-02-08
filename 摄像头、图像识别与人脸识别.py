@@ -1,9 +1,10 @@
-import os
-import requests
 import base64
-import cv2
-import operator
 import datetime
+import operator
+import os
+
+import cv2
+import requests
 
 print("=============================================")
 print("=  热键(请在摄像头的窗口使用)：             =")
@@ -119,3 +120,4 @@ while True:
         cv2.imwrite(dir_name + 'rectangle.jpg', img)
     if input == ord('q'):
         break
+# test
