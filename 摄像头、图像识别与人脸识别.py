@@ -6,7 +6,7 @@ import os
 import cv2
 import requests
 
-import sl
+import _BotIO as io
 
 print("=============================================")
 print("=  热键(请在摄像头的窗口使用)：             =")
@@ -122,7 +122,9 @@ while True:
                 face_detected = 0
                 if face_detect(cut, face_detected) == 0:
                     results = single_individual_identify(cut)  # 图像识别
-                    sl.register_item(dir_name, results)
+                    # sl.register_item(dir_name, results)
+                    io.write('results', key=dir_name[7:-1], value={'result': results[0]['keyword']})
+
                 num_of_result += 1
         cv2.imwrite(dir_name + 'rectangle.jpg', img)
 
