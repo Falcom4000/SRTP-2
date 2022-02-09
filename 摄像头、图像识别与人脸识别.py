@@ -6,6 +6,8 @@ import os
 import cv2
 import requests
 
+import sl
+
 print("=============================================")
 print("=  热键(请在摄像头的窗口使用)：             =")
 print("=  x: 拍摄图片                              =")
@@ -66,8 +68,9 @@ def cv2_base64(image):
     return base64_str
 
 
-def face_search(cut):#人脸搜索
-    access_token1= "24.5d7a52306b69800634cd64cc64f6f7c5.2592000.1646729435.282335-25559586"
+def face_search(cut):
+    # 人脸搜索
+    access_token1 = "24.5d7a52306b69800634cd64cc64f6f7c5.2592000.1646729435.282335-25559586"
     request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
     cut_base64 = cv2_base64(cut)
     newparams = {"image": cut_base64, "image_type": "BASE64", "group_id_list": "screenshot", "quality_control": "NONE",
@@ -78,7 +81,9 @@ def face_search(cut):#人脸搜索
     if response:
         return response.json()
 
-def face_detect(cut,face_detected):#人脸检测，若有结果返回1
+
+def face_detect(cut, face_detected):
+    # 人脸检测，若有结果返回1
     face_result = face_search(cut)
     try:
         for face in face_result['result']['user_list']:
@@ -91,7 +96,8 @@ def face_detect(cut,face_detected):#人脸检测，若有结果返回1
         pass
     return face_detected
 
-class_name = 'test'
+
+class_name = 'images'
 cap = cv2.VideoCapture(0 + cv2.CAP_DSHOW)
 access_token = '24.8f102109268b8c4de7e57f7ed5887012.2592000.1645240208.282335-25536399'
 
@@ -115,9 +121,11 @@ while True:
                 cut, img = cut_individual(individual, img, frame)  # 剪切图像为cut，并在origin上又标注一个矩形，得到img
                 face_detected = 0
                 if face_detect(cut, face_detected) == 0:
-                    print(single_individual_identify(cut))  # 图像识别
+                    results = single_individual_identify(cut)  # 图像识别
+                    sl.register_item(dir_name, results)
                 num_of_result += 1
         cv2.imwrite(dir_name + 'rectangle.jpg', img)
+
     if input == ord('q'):
         break
 # test

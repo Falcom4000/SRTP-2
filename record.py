@@ -33,7 +33,7 @@ def rec(file_name):
     stream.close()
     p.terminate()
 
-    wf = wave.open(file_name, 'wb')
+    wf = wave.open(class_name + file_name, 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
     wf.setframerate(RATE)
@@ -44,16 +44,16 @@ def rec(file_name):
 def wav_to_pcm(wav_file):
     # 假设 wav_file = "音频文件.wav"
     # wav_file.split(".") 得到["音频文件","wav"] 拿出第一个结果"音频文件"  与 ".pcm" 拼接 等到结果 "音频文件.pcm"
-    pcm_file = "%s.pcm" % (wav_file.split(".")[0])
+    pcm_file = "%s.pcm" % ((class_name + wav_file).split(".")[0])
 
     # 就是此前我们在cmd窗口中输入命令,这里面就是在让Python帮我们在cmd中执行命令
-    os.system("ffmpeg -y  -i %s  -acodec pcm_s16le -f s16le -ac 1 -ar 16000 %s" % (wav_file, pcm_file))
+    os.system("ffmpeg -y  -i %s  -acodec pcm_s16le -f s16le -ac 1 -ar 16000 %s" % (class_name + wav_file, pcm_file))
 
     return pcm_file
 
 
 def play_mp3(file_name):
-    os.system('ffplay ' + file_name)
+    os.system('ffplay ' + class_name + file_name)
 
 
 def recognize(file):
@@ -88,7 +88,7 @@ def synth_sound(res_str):
     client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
     synth_context = client.synthesis(res_str, 'zh', 1, {'vol': 5})
     if not isinstance(synth_context, dict):
-        with open(synth_name, 'wb') as f:
+        with open(class_name + synth_name, 'wb') as f:
             f.write(synth_context)
     else:
         print(synth_context)
@@ -131,7 +131,7 @@ def recording(filename, time=0, threshold=2000):
     CHANNELS = 2  # 声道数
     RATE = 16000  # 采样率：每秒采集数据的次数
     RECORD_SECONDS = time  # 录音时间
-    WAVE_OUTPUT_FILENAME = filename  # 文件存放位置
+    WAVE_OUTPUT_FILENAME = class_name + filename  # 文件存放位置
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     print("* 录音中...")
@@ -186,6 +186,7 @@ if __name__ == '__main__':
     RATE = 16000
     RECORD_SECONDS = 5
 
+    class_name = 'sounds/'
     record_name = 'record.wav'
     synth_name = 'synth.mp3'
     recording(record_name)
