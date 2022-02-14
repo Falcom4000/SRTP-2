@@ -41,7 +41,7 @@ def rec(file_name):
     wf.close()
 
 
-def wav_to_pcm(wav_file):
+def wav_to_pcm(wav_file,class_name):
     # 假设 wav_file = "音频文件.wav"
     # wav_file.split(".") 得到["音频文件","wav"] 拿出第一个结果"音频文件"  与 ".pcm" 拼接 等到结果 "音频文件.pcm"
     pcm_file = "%s.pcm" % ((class_name + wav_file).split(".")[0])
@@ -56,18 +56,21 @@ def play_mp3(file_name):
     os.system('ffplay ' + class_name + file_name)
 
 
-def recognize(file):
+def recognize(file,class_name):
     APP_ID = '25559029'
     API_KEY = 'PIIyG8nXV0DeVWgo8O0fNGuy'
     SECRET_KEY = 'FuiB46Ek3iHd0elRx49KTm9Xbh1QrHO1'
     client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
-    pcm_file = wav_to_pcm(file)
+    pcm_file = wav_to_pcm(file,class_name)
     with open(pcm_file, 'rb') as fp:
         file_context = fp.read()
     res = client.asr(file_context, 'pcm', 16000, {'dev_pid': 1536, })
-    res_str = res['result'][0]
-    print(res_str)
-    return res_str
+    try:
+        res_str = res['result'][0]
+        print(res_str)
+        return res_str
+    except:
+        return '的'
 
 
 def nlp(res_str):
@@ -77,9 +80,17 @@ def nlp(res_str):
     client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
     ltp = LTP()
     segment, hidden = ltp.seg([res_str])
+    pos = ltp.pos(hidden)
     print(segment)
-    # print(hidden)
-
+    print(pos)
+    dict={}
+    voice=[]
+    i =0
+    for word in segment[0]:
+        dict[word]=pos[0][i]
+        i+=1
+    voice.append(dict)
+    return voice
 
 def synth_sound(res_str):
     APP_ID = '25559029'
@@ -119,7 +130,7 @@ def synth_sound(res_str):
         return res_str'''
 
 
-def recording(filename, time=0, threshold=2000):
+def recording(filename,class_name,time=0, threshold=2000):
     """
     :param filename: 文件名
     :param time: 录音时间,如果指定时间，按时间来录音，默认为自动识别是否结束录音
@@ -178,6 +189,17 @@ def recording(filename, time=0, threshold=2000):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
 
+def full():
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 2
+    RATE = 16000
+    RECORD_SECONDS = 5
+    class_name = 'sounds/'
+    record_name = 'record.wav'
+    recording(record_name, class_name ,time=10)
+    res_str = recognize(record_name,class_name)
+    return nlp(res_str)
 
 if __name__ == '__main__':
     CHUNK = 1024
@@ -185,13 +207,12 @@ if __name__ == '__main__':
     CHANNELS = 2
     RATE = 16000
     RECORD_SECONDS = 5
-
     class_name = 'sounds/'
     record_name = 'record.wav'
     synth_name = 'synth.mp3'
-    recording(record_name)
+    recording(record_name, time=10)
     # rec(record_name)
-    res_str = recognize(record_name)
-    nlp(res_str)
+    res_str = recognize(record_name,class_name)
+    print(nlp(res_str))
     synth_sound(res_str)
-    # play_mp3(synth_name)
+    #play_mp3(synth_name)
