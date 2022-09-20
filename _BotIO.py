@@ -1,5 +1,5 @@
 import ujson
-import pandas as pd
+
 
 def load_from_json_file(filename: str) -> dict:
     try:

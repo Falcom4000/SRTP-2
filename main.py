@@ -1,19 +1,31 @@
 import cv2
-
 import camera as ca
 import _BotIO as io
+import nlp
 from record import full
-from collections import Counter
 
-
-def save_results(results, voice):
+def save_results(results, voice,dir_name):
     flag = False
     all_results = io.load_from_json_file('results.json')
     for logid, value in all_results.items():
-        if ca.IsSameImage(results[0]['keyword'], value[0][0]['result']):
-            io.write_voice('results', logid, voice)
-            flag = True
-            break
+        try:
+            if ca.IsSameImage(results[0]['keyword'], value[0][0]['result']):
+                io.write_voice('results', logid, voice)
+                flag = True
+                break
+
+        except TypeError:
+            try:
+                if ca.IsSameImage(results[0]['keyword'], value[0][0][0]['result']):
+                    io.write_voice('results', logid, voice)
+                    flag = True
+                    break
+            except TypeError:
+                if ca.IsSameImage(results[0]['keyword'], value[0][0][0][0]['result']):
+                    io.write_voice('results', logid, voice)
+                    flag = True
+                    break
+
     if not flag:
         io.register('results', key=dir_name[7:-1], value={'result': results[0]['keyword']})
         io.register('results', key=dir_name[7:-1], value={'voice': voice})
@@ -34,14 +46,19 @@ def train_mode(dir_name):
                 results = ca.single_individual_identify(cut, dir_name, num_of_result)  # 图像识别
                 temps = []
                 for i in results:
-                    if i['score']>0.6:
+                    if i['score'] > 0.6:
                         temps.append(i)
                 if temps:
                     print(temps)
+                    cv2.imshow("cut" + str(num_of_result), cut)
+                    cv2.waitKey(1)
                     voice = full()  # 录音：每个矩形框都会录一次音！
-                    save_results(results, voice)  # 保存结果
+                    save_results(results, voice,dir_name)  # 保存结果
+                    cv2.destroyWindow("cut" + str(num_of_result))
+            else:
+                pass
             num_of_result += 1
-    cv2.imwrite(dir_name + 'rectangle.jpg', img)
+        cv2.imwrite(dir_name + 'rectangle.jpg', img)
 
 
 def use_mode(dir_name):
@@ -50,60 +67,36 @@ def use_mode(dir_name):
     for individual in result_order:
         # 对多主体识别得到的所有结果：
         img = frame
-        if individual['score'] < 0.6:  # 只考虑置信度大于0.6的结果
+        if individual['score'] < 0.4:  # 只考虑置信度大于0.6的结果
             break
         else:
             cut, img = ca.cut_individual(individual, img, frame)  # 剪切图像为cut，并在origin上又标注一个矩形，得到img
             face_detected = 0
             if ca.face_detect(cut, face_detected, dir_name, num_of_result) == 0:
-                results = ca.single_individual_identify(cut, dir_name, num_of_result)  # 图像识别
+                results = ca.single_individual_identify(cut, dir_name, num_of_result)
+                # 图像识别
                 temps = []
                 for i in results:
                     if i['score'] > 0.6:
                         temps.append(i)
                 if temps:
-                    nlp_moudle(results)
+                    cv2.imshow("cut" + str(num_of_result), cut)
+                    cv2.waitKey(1000)
+                    print(temps)
+                    nlp.nlp_moudle(results,dir_name)
+                    cv2.destroyWindow("cut" + str(num_of_result))
+            else:
+                pass
             num_of_result += 1
-    cv2.imwrite(dir_name + 'rectangle.jpg', img)
-
-
-def nlp_moudle(results):
-    all_results = io.load_from_json_file('results.json')
-    flag_found = 0
-    for key, value in all_results.items():
-        if value[0][0]['result'] == results[0]['keyword']:
-            result_words = value[1]
-            flag_found = 1
-            break
-    if not flag_found:
-        print("您所选择的物品尚未注册")
-        voice = full()  # 录音：每个矩形框都会录一次音！
-        save_results(results, voice)  # 保存结果
-        return
-    nlp_dict = {}
-    word_count = []
-    temp = {}
-    for result_word in result_words.values():
-        for word_key, word_value in result_word[0].items():
-            nlp_dict[word_value] = []  # word_key是词本身，world_value是词性
-            word_count.append(word_key)
-            temp[word_key] = word_value
-    num_of_total = Counter(word_count)  # num_of_total 里key是词, value是词出现的次数
-    for nword_key, nword_value in temp.items():  # temp中key是词本身 value是词性
-        nlp_dict[nword_value].append({nword_key: num_of_total[nword_key]})
-    print(nlp_dict)
-
-
+        cv2.imwrite(dir_name + 'rectangle.jpg', img)
 if __name__ == '__main__':
 
     class_name = 'images'
     cap = cv2.VideoCapture(0 + cv2.CAP_DSHOW)
-    access_token = '24.8f102109268b8c4de7e57f7ed5887012.2592000.1645240208.282335-25536399'
 
     while True:
         # 读取摄像头传来的每帧画面，等待用户摁下键盘
         ret, frame = cap.read()
-        frame = cv2.flip(frame, 1, dst=None)
         cv2.imshow("capture", frame)
         input = cv2.waitKey(1) & 0xFF
 

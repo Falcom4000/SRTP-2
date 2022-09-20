@@ -2,21 +2,25 @@ import base64
 import datetime
 import operator
 import os
-import pandas
 
 import cv2
-import pandas as pd
 import requests
-import ujson
-import _BotIO as io
 from synonym import sentiment_classify
 
+'''
 print("============================================")
-print("=  热键(请在摄像头的窗口使用)：                 =")
-print("=  x: 训练模式                              =")
-print("=  d: 使用模式                              =")
-print("=  q: 退出                                 =")
-print("===========================================")
+print("============================================")
+print("=             欢迎测试本程序                  =")
+print("============================================")
+print("============================================")
+print("============================================")
+'''
+
+host = 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=E2kKXHZ6ReoawMlLjbERhhkO&client_secret=cZO4bvtVxV4OasbGGmI1rUYTNVvh0iQX'
+response = requests.get(host)
+if response:
+    access_token = str(response.json()['access_token'])
+else: access_token='24.2f40a01003253f426e6ce84af9720026.2592000.1648123638.282335-25536399'
 
 
 def save_origin(class_name, frame):
@@ -31,7 +35,6 @@ def multiple_individuals_identify(dir_name):
     # 多主体识别，返回排序好的多主体识别结果
     name_of_photo_origin = (dir_name + 'origin.jpg')
     request_url = "https://aip.baidubce.com/rest/2.0/image-classify/v1/multi_object_detect"
-    access_token = '24.8f102109268b8c4de7e57f7ed5887012.2592000.1645240208.282335-25536399'
     f = open(name_of_photo_origin, 'rb')
     img = base64.b64encode(f.read())
     params = {"image": img}
@@ -39,7 +42,7 @@ def multiple_individuals_identify(dir_name):
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=params, headers=headers)
     if response:
-        result = response.json()['result']
+            result = response.json()['result']
     result_order = sorted(result, key=operator.itemgetter('score'), reverse=True)
     return result_order
 
@@ -56,7 +59,7 @@ def cut_individual(individual, img, frame):
 
 
 def single_individual_identify(cut, dir_name, num_of_result):
-    access_token = '24.8f102109268b8c4de7e57f7ed5887012.2592000.1645240208.282335-25536399'
+
     # 对cut进行单主体识别,返回识别结果，将cut存入本地
     cut_base64 = cv2_base64(cut)
     new_params = {"image": cut_base64}
@@ -64,7 +67,11 @@ def single_individual_identify(cut, dir_name, num_of_result):
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=new_params, headers=headers)
     cv2.imwrite(dir_name + 'cut_' + str(num_of_result) + '.jpg', cut)
-    return (response.json()['result'])
+    try:
+        return (response.json()['result'])
+    except:
+        return ([])
+
 
 
 def cv2_base64(image):
@@ -115,5 +122,4 @@ def IsSameImage(text_1, text_2):
     except:
         return False
 
-# test
-# ai_gaming
+
